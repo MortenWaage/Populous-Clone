@@ -14,15 +14,20 @@ public class MainManager : MonoBehaviour
     public UserInterface UI { get; set; }
     public UnitSelection UnitManager { get; set; }
     public PathFindingGrid PathFinding { get; set; }
-    public bool Ready { get; private set; }
+    public MeshGenerator Terrain { get; set; }
 
     private int _runOrder;
+    private const int HORIZON_CAMERAS = 3;
+    private int _horizonCamerasIndex = 0;
+    public bool MapLoaded = false;
 
     public int RunOrder {
         get {
             _runOrder++; return _runOrder;
         }
     }
+    public bool Ready { get; private set; }
+
 
     void Awake()
     {
@@ -40,12 +45,16 @@ public class MainManager : MonoBehaviour
     IEnumerator AwaitEndOfFrame()
     {
         yield return new WaitForEndOfFrame();
+        if (!MapLoaded)
+        {
+            StartCoroutine("AwaitEndOfFrame");
+            yield break;
+        }
+
         Ready = true;
         Debug.Log($"{Globe.RunOrder} - GAME IS READY");
     }
 
-    private const int HORIZON_CAMERAS = 3;
-    private int _horizonCamerasIndex = 0;
     public void AddHorizonCam(HorizonRenderer hRend)
     {
         Debug.Log($"{RunOrder} - Horizon Camera ({_horizonCamerasIndex}) is set");

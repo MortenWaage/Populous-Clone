@@ -50,7 +50,7 @@ public class MainCamera : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
         MainManager.Instance.Camera = this;
-        Debug.Log($"{Globe.RunOrder} - Camera is set");
+        Debug.Log($"{Globe.RunOrder} - Main Camera is set");
     }
     void Start()
     {

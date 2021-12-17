@@ -1,4 +1,5 @@
 using UnityEngine;
+
 public class PathNode
 {
     public PathNode Parent;

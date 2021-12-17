@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 
 public static class Globe
@@ -25,13 +22,63 @@ public static class Globe
 
     public static Vector3 WrapAround(Vector3 destination)
     {
-        if (destination.x >= MapData.WIDTH) destination.x = destination.x - MapData.WIDTH;
+        if (destination.x >= MapData.WIDTH) destination.x -= MapData.WIDTH;
         else if (destination.x < 0) destination.x = MapData.WIDTH + destination.x;
 
-        if (destination.z >= MapData.HEIGHT) destination.z = destination.z - MapData.HEIGHT;
+        if (destination.z >= MapData.HEIGHT) destination.z -= MapData.HEIGHT;
         else if (destination.z < 0) destination.z = MapData.HEIGHT + destination.z;
 
         return destination;
+    }
+    public static Vector3Int WrapAround(Vector3Int destination)
+    {
+        if (destination.x >= MapData.WIDTH) destination.x -= MapData.WIDTH;
+        else if (destination.x < 0) destination.x = MapData.WIDTH + destination.x;
+
+        if (destination.z >= MapData.HEIGHT) destination.z -= MapData.HEIGHT;
+        else if (destination.z < 0) destination.z = MapData.HEIGHT + destination.z;
+
+        return destination;
+    }
+
+    //public static Vector3Int WrapVertex(Vector3Int position)
+    //{
+    //    int arrayWidth = MapData.WIDTH + 1, arrayHeight = MapData.HEIGHT + 1;
+
+    //    if (position.x >= arrayWidth-1) position.x -= arrayWidth;
+    //    else if (position.x < 0) position.x = arrayWidth + position.x;
+
+    //    if (position.z >= arrayHeight-1) position.z -= arrayHeight;
+    //    else if (position.z < 0) position.z = arrayHeight + position.z;
+
+    //    return position;
+    //}
+
+    //THIS WORKS - DO NOT DELETE
+    public static Vector3Int WrapVertex(Vector3Int position)
+    {
+        int arrayWidth = MapData.WIDTH + 1, arrayHeight = MapData.HEIGHT + 1;
+
+        if (position.x >= arrayWidth) position.x -= arrayWidth;
+        else if (position.x < 0) position.x = arrayWidth + position.x;
+
+        if (position.z >= arrayHeight) position.z -= arrayHeight;
+        else if (position.z < 0) position.z = arrayHeight + position.z;
+
+        return position;
+    }
+
+    public static Vector3 WrapVertex(Vector3 position)
+    {
+        int arrayWidth = MapData.WIDTH + 1, arrayHeight = MapData.HEIGHT + 1;
+
+        if (position.x >= arrayWidth) position.x -= arrayWidth;
+        else if (position.x < 0) position.x = arrayWidth + position.x;
+
+        if (position.z >= arrayHeight) position.z -= arrayHeight;
+        else if (position.z < 0) position.z = arrayHeight + position.z;
+
+        return position;
     }
 
     /*
@@ -63,7 +110,7 @@ public static class Globe
             return std::sqrt(dx * dx + dy * dy);
         }
     */
-    public static float Distance(Vector3 position, Vector3 destination)
+    public static float CompareDistance(Vector3 position, Vector3 destination)
     {
         var wrappedPosition = position;
 
@@ -87,5 +134,56 @@ public static class Globe
         var distance2 = Vector3.Distance(wrappedPosition, destination);
 
         return distance1 < distance2 ? distance1 : distance2;
+    }
+
+    public static Vector3 CalculateShortestPath(Vector3 position, Vector3 destination)
+    {
+        var xDistance = (destination.x - position.x);
+        var yDistance = (destination.z - position.z);
+
+        if (xDistance > MapData.WIDTH * 0.5f && position.x < MapData.WIDTH * 0.5f)
+        {
+            destination.x = (MapData.WIDTH - (position.x + xDistance)) * -1;
+        }
+        else if (Mathf.Abs(xDistance) > MapData.WIDTH * 0.5f && position.x >= MapData.WIDTH * 0.5f)
+        {
+            destination.x = MapData.WIDTH + destination.x;
+        }
+
+        if (yDistance > MapData.HEIGHT * 0.5f)
+        {
+            destination.z = (MapData.HEIGHT - (position.z + yDistance)) * -1;
+        }
+        else if (Mathf.Abs(yDistance) > MapData.HEIGHT * 0.5f && position.z >= MapData.HEIGHT * 0.5f)
+        {
+            destination.z = MapData.HEIGHT + destination.z;
+        }
+
+        return destination;
+    }
+
+    public static Vector3 WrapDestination(Vector3 position, Vector3 destination)
+    {
+        if (Vector3.Distance(position, destination) > MapData.WIDTH * 0.5f)
+        {
+            if (position.z < MapData.HEIGHT * 0.5f)
+                destination.z = 0 - MapData.HEIGHT - destination.z;
+            else destination.z = MapData.HEIGHT + destination.z;
+
+
+            if (position.x < MapData.WIDTH * 0.5f)
+                destination.x = 0 - MapData.WIDTH - destination.x;
+            else destination.x = MapData.WIDTH + destination.x;
+        }
+
+        return destination;
+    }
+
+    public static float GetGroundHeight(Vector3 position)
+    {
+        Physics.Raycast(position + Vector3.up * MapData.MAX_TERRAIN_HEIGHT, Vector3.down, out RaycastHit hit,
+            Mathf.Infinity, MainManager.Instance.UnitManager.Ground);
+
+        return hit.point.y;
     }
 }

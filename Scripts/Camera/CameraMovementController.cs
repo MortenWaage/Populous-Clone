@@ -9,6 +9,11 @@ using Debug = UnityEngine.Debug;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
 
+public enum CameraMode
+{
+    Auto,
+    Manual,
+}
 public class CameraMovementController : MonoBehaviour
 {
     private Camera _cam;
@@ -37,18 +42,12 @@ public class CameraMovementController : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
         Globe.UpdateHorizonCameras(transform.position);
-        Debug.Log($"{Globe.RunOrder}Initializing Horizon Camera Positions");
+        Debug.Log($"{Globe.RunOrder} - Initializing Horizon Camera Positions");
     }
     void Start()
     {
         _cam = Camera.main;
         StartCoroutine("InitializeCameraPosition");
-    }
-
-    enum CameraMode
-    {
-        Auto,
-        Manual,
     }
 
     private CameraMode _cameraMode;
@@ -60,11 +59,6 @@ public class CameraMovementController : MonoBehaviour
             case CameraMode.Manual: UpdateManual(); break;
             default: break;
         }
-    }
-
-    void LateUpdate()
-    {
-
     }
 
     private void UpdateManual()
@@ -100,12 +94,9 @@ public class CameraMovementController : MonoBehaviour
         WrapAroundMap();
     }
 
-
     private bool _changedView = true;
     private bool _planetView = true;
     private float _zoomFactor = 0f;
-    private Vector3 _savedPlanetPosition;
-    private Vector3 _savedOverviewPosition;
 
     private void UpdateAuto()
     {
@@ -117,7 +108,6 @@ public class CameraMovementController : MonoBehaviour
         if (!_planetView) ZoomIn();
         else ZoomOut();
 
-        MainManager.Instance.CameraController.transform.position = cameraPivotPosition;
         var eulerRotation = Quaternion.Euler(rotation);
         MainManager.Instance.Camera.SkyBoxCam.clearFlags = _planetView ? CameraClearFlags.Skybox : CameraClearFlags.Color;
         Globe.UpdateHorizonTransform(position, eulerRotation);
@@ -137,9 +127,6 @@ public class CameraMovementController : MonoBehaviour
             position.z = Mathf.Lerp(GlobeData.DEFAULT_PLANET_POSITION.z, GlobeData.DEFAULT_OVERVIEW_POSITION.z, _zoomFactor);
             rotation.x = Mathf.Lerp(GlobeData.DEFAULT_PLANET_ROTATION.x, GlobeData.DEFAULT_OVERVIEW_ROTATION.x, _zoomFactor);
 
-            cameraPivotPosition.x = Mathf.Lerp(_savedPlanetPosition.x, MapData.EQUATOR.x, _zoomFactor);
-            cameraPivotPosition.z = Mathf.Lerp(_savedPlanetPosition.z, MapData.EQUATOR.z, _zoomFactor);
-
             if (_zoomFactor >= 1) _changedView = true;
         }
         void ZoomOut()
@@ -151,8 +138,6 @@ public class CameraMovementController : MonoBehaviour
             position.z = Mathf.Lerp(GlobeData.DEFAULT_PLANET_POSITION.z, GlobeData.DEFAULT_OVERVIEW_POSITION.z, _zoomFactor);
             rotation.x = Mathf.Lerp(GlobeData.DEFAULT_PLANET_ROTATION.x, GlobeData.DEFAULT_OVERVIEW_ROTATION.x, _zoomFactor);
 
-            cameraPivotPosition.x = Mathf.Lerp(_savedPlanetPosition.x, _savedOverviewPosition.x, _zoomFactor);
-            cameraPivotPosition.z = Mathf.Lerp(_savedPlanetPosition.z, _savedOverviewPosition.z, _zoomFactor);
 
             if (_zoomFactor <= 0) _changedView = true;
         }
@@ -170,13 +155,7 @@ public class CameraMovementController : MonoBehaviour
     private void ChangeView()
     {
         _changedView = false;
-
-        if (_planetView) _savedPlanetPosition = MainManager.Instance.CameraController.transform.position;
-        else
-        {
-            _savedOverviewPosition = MainManager.Instance.CameraController.transform.position;
-            _skyBox.ToggleAtmosphere();
-        }
+        if (! _planetView) _skyBox.ToggleAtmosphere();
         _planetView = !_planetView;
         _skyBox.ToggleStars();
     }
@@ -211,22 +190,5 @@ public class CameraMovementController : MonoBehaviour
 
         Globe.UpdateHorizonCameras(pivotPos);
         transform.position = pivotPos;
-    }
-
-    void OnDrawGizmos()
-    {
-        return;
-        if (!Application.isPlaying) return;
-
-        var distance = 10f;
-
-        Gizmos.color = Color.blue;
-        Gizmos.DrawLine(transform.position, transform.position + Vector3.forward * distance);
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(transform.position, transform.position + Vector3.right * distance);
-
-        Gizmos.color = Color.green;
-        Gizmos.DrawLine(transform.position, transform.position + Vector3.up * distance);
     }
 }

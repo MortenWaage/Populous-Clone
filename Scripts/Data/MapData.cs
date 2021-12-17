@@ -9,8 +9,6 @@ public static class MapData
 
     public const float MIN_TERRAIN_HEIGHT = 1f;
     public const float MAX_TERRAIN_HEIGHT = 30f;
-
-    public static Vector3 EQUATOR = new Vector3(WIDTH * 0.5f, 0, HEIGHT * 0.5f);
 }
 
 public static class GlobeData

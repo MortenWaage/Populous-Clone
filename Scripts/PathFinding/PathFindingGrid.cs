@@ -1,8 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
-using JetBrains.Annotations;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class PathFindingGrid : MonoBehaviour
@@ -29,29 +26,65 @@ public class PathFindingGrid : MonoBehaviour
         StartCoroutine("CalculateWalkableGround");
     }
 
-    IEnumerator CalculateWalkableGround()
+    public void RecalculateGround() //--Should just take in a list of coordinates and only update these rather than the whole map, but got no time to fix it.
     {
-        for (var z = 0; z < MapData.HEIGHT; z++)
-        for (var x = 0; x < MapData.WIDTH; x++)
-        {
-            _worldPaths[x, z] = TestGroundForWalkability(x, z);
-        }
+        StartCoroutine("RecalculatePathingGrid");
+    }
+
+
+    IEnumerator RecalculatePathingGrid()
+    {
+        yield return new WaitForSeconds(1);
 
         for (var z = 0; z < MapData.HEIGHT; z++)
-        for (var x = 0; x < MapData.WIDTH; x++)
         {
-            _worldNodes[x, z] = new PathNode(_worldPaths[x, z], new Vector3Int(x, 0, z));
+            for (var x = 0; x < MapData.WIDTH; x++)
+            {
+                _worldPaths[x, z] = TestGroundForWalkability(x, z);
+                _worldNodes[x, z].Walkable = _worldPaths[x, z];
+            }
+            yield return new WaitForEndOfFrame();
         }
+
+        Debug.Log($"{Globe.RunOrder} - Recalculated pathfinding grid.");
+    }
+    IEnumerator CalculateWalkableGround()
+    {
+        yield return new WaitForSeconds(1);
+
+        for (var z = 0; z < MapData.HEIGHT; z++)
+        {
+            for (var x = 0; x < MapData.WIDTH; x++)
+            {
+                _worldPaths[x, z] = TestGroundForWalkability(x, z);
+            }
+            yield return new WaitForEndOfFrame();
+        }
+
+
+        for (var z = 0; z < MapData.HEIGHT; z++)
+        {
+            for (var x = 0; x < MapData.WIDTH; x++)
+            {
+                _worldNodes[x, z] = new PathNode(_worldPaths[x, z], new Vector3Int(x, 0, z));
+            }
+            yield return new WaitForEndOfFrame();
+        }
+
         
         yield return new WaitForSeconds(1);
         _hasCalculatedPaths = true;
+        Debug.Log($"{Globe.RunOrder} - Calculated {_walkableTiles}/{_worldNodes.Length} walkable nodes.");
     }
 
+    private int _walkableTiles = 0;
     private bool TestGroundForWalkability(int x, int z)
     {
         var position = new Vector3(x, 0, z) + (Vector3.up * MapData.MAX_TERRAIN_HEIGHT);
         Physics.Raycast(position, Vector3.down, out RaycastHit hit, Mathf.Infinity);
-        return hit.point.y > MapData.MIN_TERRAIN_HEIGHT && hit.point.y < 2f;
+        var isWalkable = hit.point.y > MapData.MIN_TERRAIN_HEIGHT && hit.point.y < 2f;
+        if (isWalkable) _walkableTiles++;
+        return isWalkable;
     }
 
 
@@ -213,8 +246,10 @@ public class PathFindingGrid : MonoBehaviour
     }
 
     private List<PathNode> GizmoDisplayedPath;
+    [SerializeField] private bool ShowPath;
     void OnDrawGizmos()
     {
+        if (!ShowPath) return;
         if (!Application.isPlaying) return;
         if (!_hasCalculatedPaths) return;
 
@@ -231,8 +266,8 @@ public class PathFindingGrid : MonoBehaviour
         {
             var worldPosition = Globe.WrapAround(new Vector3Int(x, 2, z));
 
-            var gridX = (int)worldPosition.x;
-            var gridZ = (int)worldPosition.z;
+            var gridX = worldPosition.x;
+            var gridZ = worldPosition.z;
             if (!_worldPaths[gridX, gridZ]) continue;
             Gizmos.DrawSphere(worldPosition, 0.1f);
         }

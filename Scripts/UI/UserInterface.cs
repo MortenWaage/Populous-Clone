@@ -10,9 +10,24 @@ public class UserInterface : MonoBehaviour
     [SerializeField] private Text _text_3;
     [SerializeField] private Text _text_4;
 
+    [SerializeField] private bool _useUI;
+
+    private RawImage _backGround;
+
     void Awake()
     {
         StartCoroutine("AwaitEndOfFrame");
+
+        _backGround = GetComponentInChildren<RawImage>();
+
+        _backGround.gameObject.SetActive(_useUI);
+        if (!_useUI)
+        {
+            _text_1.text = "";
+            _text_2.text = "";
+            _text_3.text = "";
+            _text_4.text = "";
+        }
     }
 
     IEnumerator AwaitEndOfFrame()
@@ -22,8 +37,24 @@ public class UserInterface : MonoBehaviour
         Debug.Log($"{Globe.RunOrder} - UserInterface is set");
     }
 
+    void OnValidate()
+    {
+        if (!Application.isPlaying) return;
+
+        if (_backGround != null) _backGround.gameObject.SetActive(_useUI);
+
+        if (!_useUI)
+        {
+            _text_1.text = "";
+            _text_2.text = "";
+            _text_3.text = "";
+            _text_4.text = "";
+        }
+    }
     public void Text(int displayID, string text)
     {
+        if (!_useUI) return;
+
         switch (displayID)
         {
             case 0: _text_1.text = text; break;
